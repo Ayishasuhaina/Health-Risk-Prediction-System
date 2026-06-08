@@ -1,0 +1,12 @@
+Project: Health Risk Prediction System
+
+Description:
+This project predicts health risks using machine learning based on user health parameters such as age, BMI, blood pressure, and glucose level.
+
+Technology:
+Python
+Flask
+HTML
+CSS
+SQLite
+Scikit-learn
