@@ -1,0 +1,223 @@
+{% extends "base.html" %}
+{% block title %}Predict - Health Risk Prediction System{% endblock %}
+
+{% block content %}
+<div class="dashboard-layout">
+    <aside class="sidebar">
+        <div class="sidebar-header"><i class="bi bi-grid-1x2-fill me-2"></i>Dashboard</div>
+        <ul class="sidebar-nav">
+            <li><a href="{{ url_for('dashboard') }}"><i class="bi bi-speedometer2"></i> Overview</a></li>
+            <li><a href="{{ url_for('predict_page') }}" class="active"><i class="bi bi-activity"></i> Predict</a></li>
+            <li><a href="{{ url_for('history') }}"><i class="bi bi-clock-history"></i> History</a></li>
+            <li><a href="{{ url_for('profile') }}"><i class="bi bi-person"></i> Profile</a></li>
+            <li><a href="{{ url_for('feedback_page') }}"><i class="bi bi-chat-dots"></i> Feedback</a></li>
+        </ul>
+    </aside>
+
+    <main class="dashboard-content">
+        <div class="page-header">
+            <div>
+                <h2 class="fw-bold mb-1">Health Risk Prediction</h2>
+                <p class="text-muted mb-0">Enter your health information for AI-powered risk assessment</p>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-lg-7">
+                <div class="content-card">
+                    <form method="POST" action="{{ url_for('predict_page') }}" id="predictionForm" novalidate>
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                        <h6 class="section-title">Personal Information</h6>
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-4">
+                                <label class="form-label">Age</label>
+                                <input type="number" name="age" class="form-control" required min="1" max="120"
+                                       value="{{ form_data.age if form_data else '' }}" placeholder="30">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Gender</label>
+                                <select name="gender" class="form-select" required>
+                                    <option value="">Select</option>
+                                    {% for g in ['Male', 'Female', 'Other'] %}
+                                    <option value="{{ g }}" {% if form_data and form_data.gender == g %}selected{% endif %}>{{ g }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Family History</label>
+                                <select name="family_history" class="form-select" required>
+                                    {% for v in ['No', 'Yes'] %}
+                                    <option value="{{ v }}" {% if form_data and form_data.family_history == v %}selected{% endif %}>{{ v }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+
+                        <h6 class="section-title">Body Metrics</h6>
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-4">
+                                <label class="form-label">Height (cm)</label>
+                                <input type="number" name="height" id="height" class="form-control" required min="100" max="250" step="0.1"
+                                       value="{{ form_data.height if form_data else '' }}" placeholder="170">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Weight (kg)</label>
+                                <input type="number" name="weight" id="weight" class="form-control" required min="30" max="300" step="0.1"
+                                       value="{{ form_data.weight if form_data else '' }}" placeholder="70">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">BMI</label>
+                                <input type="number" name="bmi" id="bmi" class="form-control" required min="10" max="60" step="0.01"
+                                       value="{{ form_data.bmi if form_data else '' }}" placeholder="Auto-calculated" readonly>
+                            </div>
+                        </div>
+
+                        <h6 class="section-title">Vital Signs</h6>
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-4">
+                                <label class="form-label">Systolic BP</label>
+                                <input type="number" name="systolic_bp" class="form-control" required min="70" max="220"
+                                       value="{{ form_data.systolic_bp if form_data else '' }}" placeholder="120">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Diastolic BP</label>
+                                <input type="number" name="diastolic_bp" class="form-control" required min="40" max="140"
+                                       value="{{ form_data.diastolic_bp if form_data else '' }}" placeholder="80">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Heart Rate</label>
+                                <input type="number" name="heart_rate" class="form-control" required min="40" max="200"
+                                       value="{{ form_data.heart_rate if form_data else '' }}" placeholder="72">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Blood Sugar (mg/dL)</label>
+                                <input type="number" name="blood_sugar" class="form-control" required min="50" max="400" step="0.1"
+                                       value="{{ form_data.blood_sugar if form_data else '' }}" placeholder="100">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Cholesterol (mg/dL)</label>
+                                <input type="number" name="cholesterol" class="form-control" required min="100" max="400"
+                                       value="{{ form_data.cholesterol if form_data else '' }}" placeholder="200">
+                            </div>
+                        </div>
+
+                        <h6 class="section-title">Lifestyle</h6>
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-4">
+                                <label class="form-label">Smoking</label>
+                                <select name="smoking" class="form-select" required>
+                                    {% for v in ['No', 'Occasionally', 'Yes'] %}
+                                    <option value="{{ v }}" {% if form_data and form_data.smoking == v %}selected{% endif %}>{{ v }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Alcohol</label>
+                                <select name="alcohol" class="form-select" required>
+                                    {% for v in ['No', 'Occasionally', 'Yes'] %}
+                                    <option value="{{ v }}" {% if form_data and form_data.alcohol == v %}selected{% endif %}>{{ v }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Exercise Frequency</label>
+                                <select name="exercise_frequency" class="form-select" required>
+                                    {% for v in ['Never', 'Rarely', 'Sometimes', 'Often', 'Daily'] %}
+                                    <option value="{{ v }}" {% if form_data and form_data.exercise_frequency == v %}selected{% endif %}>{{ v }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Diet Quality</label>
+                                <select name="diet_quality" class="form-select" required>
+                                    {% for v in ['Poor', 'Average', 'Good', 'Excellent'] %}
+                                    <option value="{{ v }}" {% if form_data and form_data.diet_quality == v %}selected{% endif %}>{{ v }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Sleep Hours</label>
+                                <input type="number" name="sleep_hours" class="form-control" required min="1" max="16" step="0.5"
+                                       value="{{ form_data.sleep_hours if form_data else '' }}" placeholder="7">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Stress Level</label>
+                                <select name="stress_level" class="form-select" required>
+                                    {% for v in ['Low', 'Moderate', 'High', 'Very High'] %}
+                                    <option value="{{ v }}" {% if form_data and form_data.stress_level == v %}selected{% endif %}>{{ v }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-lg w-100">
+                            <i class="bi bi-cpu me-2"></i>Predict Health Risk
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="col-lg-5">
+                {% if result %}
+                <div class="content-card result-card animate-fade mb-4">
+                    <h5 class="card-title"><i class="bi bi-clipboard-check me-2"></i>Prediction Result</h5>
+                    <div class="text-center py-3">
+                        <span class="badge bg-{{ risk_badge_class(result.prediction) }} result-badge">{{ result.prediction }}</span>
+                        <div class="mt-3">
+                            <div class="progress mb-2" style="height: 25px;">
+                                <div class="progress-bar bg-{{ risk_badge_class(result.prediction) }}"
+                                     style="width: {{ result.confidence }}%">{{ result.confidence }}% Confidence</div>
+                            </div>
+                            <p class="text-muted mb-0">Risk Percentage: <strong>{{ result.risk_percentage }}%</strong></p>
+                        </div>
+                    </div>
+
+                    <h6 class="mt-3">Probability Distribution</h6>
+                    {% for label, prob in result.probability.items() %}
+                    <div class="mb-2">
+                        <div class="d-flex justify-content-between"><small>{{ label }}</small><small>{{ prob }}%</small></div>
+                        <div class="progress" style="height: 8px;">
+                            <div class="progress-bar bg-{{ risk_badge_class(label) }}" style="width: {{ prob }}%"></div>
+                        </div>
+                    </div>
+                    {% endfor %}
+
+                    <a href="{{ url_for('download_report', prediction_id=result.prediction_id) }}" class="btn btn-outline-primary w-100 mt-3">
+                        <i class="bi bi-download me-1"></i> Download PDF Report
+                    </a>
+                </div>
+
+                {% if result.recommendation_sections %}
+                <div class="content-card">
+                    <h5 class="card-title"><i class="bi bi-lightbulb me-2"></i>Recommendations</h5>
+                    {% for title, items in result.recommendation_sections.items() %}
+                    <div class="recommendation-section mb-3">
+                        <h6 class="text-primary">{{ title }}</h6>
+                        <ul class="recommendation-list">
+                            {% for item in items %}<li>{{ item }}</li>{% endfor %}
+                        </ul>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                {% else %}
+                <div class="content-card info-card text-center py-5">
+                    <i class="bi bi-info-circle info-icon"></i>
+                    <h5 class="mt-3">Ready for Assessment</h5>
+                    <p class="text-muted">Fill in your health details and click Predict to receive your personalized risk analysis.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </main>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    initBMICalculator('height', 'weight', 'bmi');
+});
+</script>
+{% endblock %}

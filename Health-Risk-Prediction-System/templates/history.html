@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block title %}History - Health Risk Prediction System{% endblock %}
+
+{% block content %}
+<div class="dashboard-layout">
+    <aside class="sidebar">
+        <div class="sidebar-header"><i class="bi bi-grid-1x2-fill me-2"></i>Dashboard</div>
+        <ul class="sidebar-nav">
+            <li><a href="{{ url_for('dashboard') }}"><i class="bi bi-speedometer2"></i> Overview</a></li>
+            <li><a href="{{ url_for('predict_page') }}"><i class="bi bi-activity"></i> Predict</a></li>
+            <li><a href="{{ url_for('history') }}" class="active"><i class="bi bi-clock-history"></i> History</a></li>
+            <li><a href="{{ url_for('profile') }}"><i class="bi bi-person"></i> Profile</a></li>
+            <li><a href="{{ url_for('feedback_page') }}"><i class="bi bi-chat-dots"></i> Feedback</a></li>
+        </ul>
+    </aside>
+
+    <main class="dashboard-content">
+        <div class="page-header">
+            <div>
+                <h2 class="fw-bold mb-1">Prediction History</h2>
+                <p class="text-muted mb-0">View all your past health risk assessments</p>
+            </div>
+            <a href="{{ url_for('predict_page') }}" class="btn btn-primary"><i class="bi bi-plus-circle me-1"></i> New Prediction</a>
+        </div>
+
+        <div class="content-card">
+            {% if predictions %}
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Date</th>
+                            <th>Prediction</th>
+                            <th>Confidence</th>
+                            <th>Risk %</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for p in predictions %}
+                        <tr>
+                            <td>{{ loop.index }}</td>
+                            <td>{{ format_datetime(p.created_at) }}</td>
+                            <td><span class="badge bg-{{ risk_badge_class(p.prediction) }}">{{ p.prediction }}</span></td>
+                            <td>{{ p.confidence }}%</td>
+                            <td>{{ p.probability }}%</td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#modal{{ p.id }}">
+                                    <i class="bi bi-eye"></i> View
+                                </button>
+                                <a href="{{ url_for('download_report', prediction_id=p.id) }}" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-download"></i> PDF
+                                </a>
+                            </td>
+                        </tr>
+
+                        <div class="modal fade" id="modal{{ p.id }}" tabindex="-1">
+                            <div class="modal-dialog modal-lg">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">Prediction Details - {{ format_datetime(p.created_at) }}</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <p><strong>Risk Level:</strong> <span class="badge bg-{{ risk_badge_class(p.prediction) }}">{{ p.prediction }}</span></p>
+                                        <p><strong>Confidence:</strong> {{ p.confidence }}%</p>
+                                        <p><strong>Risk Percentage:</strong> {{ p.probability }}%</p>
+                                        <hr>
+                                        <h6>Recommendations</h6>
+                                        <pre class="recommendation-pre">{{ p.recommendation }}</pre>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="bi bi-inbox display-4 text-muted"></i>
+                <p class="text-muted mt-3">No prediction history found.</p>
+                <a href="{{ url_for('predict_page') }}" class="btn btn-primary">Make Your First Prediction</a>
+            </div>
+            {% endif %}
+        </div>
+    </main>
+</div>
+{% endblock %}

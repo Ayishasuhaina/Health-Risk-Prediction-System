@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+{% block title %}Admin - Health Risk Prediction System{% endblock %}
+
+{% block content %}
+{% if admin_login %}
+<section class="auth-section">
+    <div class="container">
+        <div class="row justify-content-center align-items-center min-vh-100">
+            <div class="col-md-5">
+                <div class="auth-card animate-fade">
+                    <div class="text-center mb-4">
+                        <i class="bi bi-shield-lock auth-icon"></i>
+                        <h3 class="fw-bold mt-2">Admin Login</h3>
+                        <p class="text-muted">Secure administrator access</p>
+                    </div>
+                    <form method="POST" action="{{ url_for('admin_login') }}" novalidate>
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div class="mb-3">
+                            <label class="form-label">Username</label>
+                            <input type="text" name="username" class="form-control" required placeholder="admin">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Password</label>
+                            <input type="password" name="password" class="form-control" required placeholder="Enter password">
+                        </div>
+                        <button type="submit" class="btn btn-dark w-100 py-2">Login as Admin</button>
+                        <p class="text-center mt-3 mb-0"><a href="{{ url_for('index') }}">Back to Home</a></p>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% else %}
+<div class="dashboard-layout">
+    <aside class="sidebar admin-sidebar">
+        <div class="sidebar-header"><i class="bi bi-shield-check me-2"></i>Admin Panel</div>
+        <ul class="sidebar-nav">
+            <li><a href="{{ url_for('admin_dashboard') }}" class="active"><i class="bi bi-speedometer2"></i> Dashboard</a></li>
+            <li><a href="{{ url_for('index') }}"><i class="bi bi-house"></i> Home</a></li>
+            <li><a href="{{ url_for('admin_logout') }}" class="text-danger"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
+        </ul>
+    </aside>
+
+    <main class="dashboard-content">
+        <div class="page-header">
+            <div>
+                <h2 class="fw-bold mb-1">Admin Dashboard</h2>
+                <p class="text-muted mb-0">System-wide analytics and management</p>
+            </div>
+        </div>
+
+        <div class="row g-4 mb-4">
+            <div class="col-md-3">
+                <div class="stat-card stat-primary">
+                    <div class="stat-icon"><i class="bi bi-people"></i></div>
+                    <div><h3>{{ total_users }}</h3><p>Total Users</p></div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card stat-info">
+                    <div class="stat-icon"><i class="bi bi-clipboard-data"></i></div>
+                    <div><h3>{{ total_predictions }}</h3><p>Total Predictions</p></div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="stat-card stat-success">
+                    <div class="stat-icon"><i class="bi bi-shield-check"></i></div>
+                    <div><h3>{{ low_count }}</h3><p>Low</p></div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="stat-card stat-warning">
+                    <div class="stat-icon"><i class="bi bi-exclamation-triangle"></i></div>
+                    <div><h3>{{ medium_count }}</h3><p>Medium</p></div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="stat-card stat-danger">
+                    <div class="stat-icon"><i class="bi bi-heartbreak"></i></div>
+                    <div><h3>{{ high_count }}</h3><p>High</p></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4 mb-4">
+            <div class="col-lg-6">
+                <div class="content-card">
+                    <h5 class="card-title"><i class="bi bi-pie-chart me-2"></i>Risk Distribution</h5>
+                    <canvas id="adminRiskChart" height="250"></canvas>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="content-card">
+                    <h5 class="card-title"><i class="bi bi-bar-chart me-2"></i>Monthly Statistics</h5>
+                    <canvas id="adminMonthlyChart" height="250"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-lg-6">
+                <div class="content-card">
+                    <h5 class="card-title"><i class="bi bi-clock-history me-2"></i>Latest Predictions</h5>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover">
+                            <thead><tr><th>User ID</th><th>Prediction</th><th>Date</th></tr></thead>
+                            <tbody>
+                                {% for p in latest_predictions %}
+                                <tr>
+                                    <td>{{ p.user_id }}</td>
+                                    <td><span class="badge bg-{{ risk_badge_class(p.prediction) }}">{{ p.prediction }}</span></td>
+                                    <td>{{ format_datetime(p.created_at) }}</td>
+                                </tr>
+                                {% else %}
+                                <tr><td colspan="3" class="text-muted text-center">No predictions yet</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="content-card">
+                    <h5 class="card-title"><i class="bi bi-people me-2"></i>Recent Users</h5>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover">
+                            <thead><tr><th>Name</th><th>Email</th><th>Joined</th></tr></thead>
+                            <tbody>
+                                {% for u in users %}
+                                <tr><td>{{ u.name }}</td><td>{{ u.email }}</td><td>{{ format_datetime(u.created_at)[:10] }}</td></tr>
+                                {% else %}
+                                <tr><td colspan="3" class="text-muted text-center">No users yet</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="content-card mt-4">
+            <h5 class="card-title"><i class="bi bi-chat-dots me-2"></i>Recent Feedback</h5>
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead><tr><th>User ID</th><th>Rating</th><th>Feedback</th><th>Date</th></tr></thead>
+                    <tbody>
+                        {% for f in feedbacks %}
+                        <tr>
+                            <td>{{ f.user_id }}</td>
+                            <td>{% for i in range(f.rating) %}<i class="bi bi-star-fill text-warning"></i>{% endfor %}</td>
+                            <td>{{ f.feedback[:80] }}{% if f.feedback|length > 80 %}...{% endif %}</td>
+                            <td>{{ format_datetime(f.created_at) }}</td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="4" class="text-muted text-center">No feedback yet</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+{% if not admin_login %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    initRiskPieChart('adminRiskChart', {{ low_count }}, {{ medium_count }}, {{ high_count }});
+    initMonthlyChart('adminMonthlyChart', {{ monthly_stats | tojson }});
+});
+</script>
+{% endif %}
+{% endblock %}
